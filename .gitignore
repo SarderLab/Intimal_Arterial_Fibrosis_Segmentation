@@ -1,0 +1,12 @@
+data/
+dataset/
+results/
+files/
+checkpoints/
+logs/
+public/
+
+__pycache__/
+
+run.txt
+run.sh
