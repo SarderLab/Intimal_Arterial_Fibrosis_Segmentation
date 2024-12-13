@@ -123,4 +123,4 @@ if __name__ == '__main__':
 
     output_csv_path, folder_name = process_csv_and_generate_crops(gc, csv_path, folder_name, wsi_dir, dataset_dir, annotation_name_intima, annotation_name_arteries, artery_margin, save_flag)
     pred_path = evaluate(os.path.join(dataset_dir, folder_name), checkpoint_params, save_flag)
-    evaluate_csv(output_csv_path, os.path.join(feature_path, folder_name), pred_path, os.path.join(dataset_dir, folder_name))
+    evaluate_csv(output_csv_path, os.path.join(feature_path, folder_name), os.path.join(dataset_dir, folder_name))

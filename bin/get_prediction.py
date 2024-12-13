@@ -53,13 +53,41 @@ def evaluate(dataset_path, checkpoint_params, save_flag=True, method='basic'):
             time_taken.append(time.time() - st)
             pred = get_pred(logit, method)
             if save_flag:
-                save_path = save_prediction(pred, name, dataset, model.uid, os.path.join(dataset_path, 'predictions'))
+                save_path = save_prediction(pred, name, os.path.join(dataset_path, 'predictions'))
                 eval_count += 1
     
     print(f"Time taken to evaluate {eval_count} images: {np.mean(time_taken):0.4f} seconds")
     if save_flag:
         print(f"Predictions saved at {save_path}")
-        return save_path
+        generate_overlays(dataset_path)
+    
+def generate_overlays(dataset_path):
+    create_dir(os.path.join(dataset_path, 'overlays'))
+    if len(os.listdir(os.path.join(dataset_path, 'images'))) != len(os.listdir(os.path.join(dataset_path, 'predictions'))):
+        print("Images and predictions count mismatch. Skipping overlay generation...")
+        return
+    
+    image_list = os.listdir(os.path.join(dataset_path, 'images'))
+    try:
+        for file in image_list:
+            image = cv2.imread(os.path.join(dataset_path, 'images', file), cv2.IMREAD_COLOR)
+            image = cv2.resize(image, (IntimaDataset.WIDTH, IntimaDataset.HEIGHT), interpolation = cv2.INTER_AREA)
+            pred = cv2.imread(os.path.join(dataset_path, 'predictions', file), cv2.IMREAD_GRAYSCALE)
+            pred = cv2.resize(pred, (IntimaDataset.WIDTH, IntimaDataset.HEIGHT), interpolation = cv2.INTER_AREA)
+
+            overlay = create_overlay(image, pred)
+            cv2.imwrite(os.path.join(dataset_path, 'overlays', file), overlay)
+        print(f"Overlays generated at {os.path.join(dataset_path, 'overlays')}")
+
+    except Exception as e:
+        print(f"Error generating overlays: {e}")
+    
+def create_overlay(image, mask, alpha=0.5):
+    if len(mask.shape) == 2:
+        mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+
+    overlay = cv2.addWeighted(image, alpha, mask, (1 - alpha), 0)
+    return overlay
 
 # Function to save the prediction as image
 def save_prediction(logit, name, save_path):
