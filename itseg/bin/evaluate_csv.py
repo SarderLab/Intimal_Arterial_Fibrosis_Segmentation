@@ -10,7 +10,7 @@ from resources.Dataset import IntimaDataset
 
 
 # Function to evaluate the predictions and generate the results csv
-def evaluate_csv(csv_path, feature_path, dataset_path):
+def evaluateCSV(csv_path, feature_path, dataset_path):
     idx = 0
     logs = []
     pred_path = os.path.join(dataset_path, 'predictions')
