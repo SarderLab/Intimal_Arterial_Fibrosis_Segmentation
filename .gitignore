@@ -5,6 +5,7 @@ files/
 checkpoints/
 logs/
 public/
+.venv
 
 __pycache__/
 
