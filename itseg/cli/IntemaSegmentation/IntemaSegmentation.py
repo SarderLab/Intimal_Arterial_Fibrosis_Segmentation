@@ -4,13 +4,13 @@ import girder_client
 import argparse
 
 from shapely.geometry import Polygon
-from bin.get_csv import process_folder_annotations
+from bin.get_csv import check_and_download_files
 from bin.download_svs import download_svs_files
 from bin.artery_cropping import get_annotation_id, get_annotation_elements, process_point_annotation_elements, process_annotation_elements, find_closest_artery_to_point, save_cropped_artery_image
 from bin.get_prediction import evaluate
 from bin.evaluate_csv import evaluateCSV
 from bin.utils import create_dir
-
+from itseg.utils import get_local_file_path
 
 def process_csv_and_generate_crops(gc, csv_path, folder_name, wsi_dir, dataset_dir, annotation_name_intima, annotation_name_arteries, artery_margin, save_flag):
     box_coords = []
@@ -84,33 +84,27 @@ def process_csv_and_generate_crops(gc, csv_path, folder_name, wsi_dir, dataset_d
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--api_url", help="API URL", required=True)
-    parser.add_argument("--token", help="API Token (User Specific)", required=True)
-    parser.add_argument("--folder_id", help="Folder ID", required=True)
+    parser.add_argument("--girderApiUrl", help="API URL", required=True)
+    parser.add_argument("--girderToken", help="API Token (User Specific)", required=True)
+    parser.add_argument("--file_id", help="Input WSI Image", required=True)
     parser.add_argument("--artery_cropping_margin", help="Margin for artery cropping", required=False, default=30)
-    parser.add_argument("--working_dir", help="Working Directory: Directory to store WSI images, cropped images and predictions", required=True)
-    parser.add_argument("--model_path", help="Path to trained and tested model", required=True, default='checkpoints/')
-    parser.add_argument("--model_save_type", help="Which checkpoint to use for model: loss/accuracy/adc", required=True, default='loss')
-    parser.add_argument("--model_uid", help="Model Unique Identifier", required=True)
+    parser.add_argument("--model_type", help="Which model to use for segmentation: loss/accuracy/adc", required=True, default='loss')
     args = parser.parse_args()
     
-    folder_id = str(args.folder_id)
+    input_image_id = args.file_id
     artery_margin = int(args.artery_cropping_margin)
-    working_dir = str(args.working_dir)
-    feature_path = '/blue/pinaki.sarder/ujwalaguttikonda/KPMP_features/features/'
-
-    if args.api_url and args.token:
-        gc = girder_client.GirderClient(apiUrl=str(args.api_url))
+    #working_dir = get_local_file_path()
+    gc = None
+    if args.girderApiUrl and args.girderToken:
+        gc = girder_client.GirderClient(apiUrl=str(args.girderApiUrl))
         gc.setToken(str(args.token))
     else:
         raise ValueError("API URL and Token are required.")
 
-    annotation_name_intima = "Intima_test"
-    annotation_name_arteries = ["arteries/arterioles", " arteries/arterioles"]
-    folder_name, csv_path = process_folder_annotations(gc, folder_id)
+    #Check whether both the annotation files are present 
+    check_and_download_files()
 
-    wsi_dir = os.path.join(working_dir, 'WSI')
-    dataset_dir = os.path.join(working_dir, 'dataset')
+    # Download svs file #TODO also download the req model file 
     wsi_count = download_svs_files(csv_path, folder_name, wsi_dir, gc)
     print(f"Downloaded {wsi_count} WSI files.")
 

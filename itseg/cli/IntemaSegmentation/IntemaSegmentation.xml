@@ -1,1 +1,93 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<executable>
+  <category>HistomicsTK</category>
+  <title>Intema Segmentation</title>
+  <description>Segment the Intema substructure from Kidneys with the help of Arteries/Artieroles</description>
+  <version>0.1.0</version>
+  <documentation-url>https://github.com/SarderLab/Intimal_Arterial_Fibrosis_Segmentation</documentation-url>
+  <license>Apache 2.0</license>
+  <contributor>Suhas Katari Chaluva Kumar (Dynanet)</contributor>
+  <acknowledgements>This work is part of efforts in digital pathology by the Sarder Lab: UFL.</acknowledgements>
+  <parameters>
+    <label>IO</label>
+    <description>Input/output parameters</description>
+     <string-enumeration>
+      <name>model_type</name>
+      <label>Model Type</label>
+      <description>Choose the type of model to perform the Intema Segmentation</description>
+      <element>loss</element>
+      <element>adc</element>
+      <element>accuracy</element>
+      <default>loss</default>
+      <index>0</index>
+   </string-enumeration>
+   <!-- <string-enumeration>
+      <name>dimention_reduction</name>
+      <label>Dimentionality reduction </label>
+      <description>Choose the dimentionlaity reduction technique</description>
+      <element>PCA</element>
+      <element>UMAP</element>
+      <default>PCA</default>
+      <index>1</index>
+   </string-enumeration>
+   <string-enumeration>
+      <name>clustering</name>
+      <label>Clustering</label>
+      <description>Choose the Clustering technique</description>
+      <element>K_Means</element>
+      <element>LOUVAIN</element>
+      <default>K_Means</default>
+      <index>2</index>
+   </string-enumeration>
+   <integer>
+      <name>nbrs</name>
+      <label>Number of Clusters/Neighbors</label>
+      <description>Choose the number of clusters/neighbors</description>
+      <default>5</default>
+      <index>3</index>
+   </integer> -->
+   <image reference="_girder_id_" >
+     <name>file_id</name>
+     <label>Input Image</label>
+     <description>The Input WSI image for which we need to segment Intima</description>
+     <channel>input</channel>
+     <index>4</index>
+   </image > 
+  </parameters>
+  <parameters advanced="true">
+    <label>Additional Options</label>
+    <description>Option for optimizing parameters for the segmentation process</description>
+    <integer>
+      <name>artery_cropping_margin</name>
+      <label>Artery Cropping Margin</label>
+      <description>Specify a margin value to use for cropping arteries. Defaults to 30</description>
+      <longflag>artery_cropping_margin</longflag>
+      <default>30</default>
+    </integer>
+    <!-- <boolean>
+      <name>use_original</name>
+      <label>Original Data</label>
+      <description>Use the original dataset for clutering instead of Prinicpal Components. </description>
+      <longflag>use_original</longflag>
+      <default>False</default>
+    </boolean> -->
+  </parameters>
+  <parameters advanced="true">
+    <label>API config</label>
+    <description>API Config</description>
+     <string>
+      <name>girderApiUrl</name>
+      <label>Girder API URL</label>
+      <description>API URL for the girder instance</description>
+      <longflag>girderApiUrl</longflag>
+      <default></default>
+     </string>
+      <string>
+      <name>girderToken</name>
+      <label>Girder Token</label>
+      <description>API Token for the Girder Instance</description>
+      <longflag>girderToken</longflag>
+      <default></default>
+     </string>
+  </parameters>
+</executable>
