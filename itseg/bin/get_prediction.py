@@ -16,36 +16,31 @@ from tqdm.notebook import tqdm
 
 # Function to get the device
 def get_device():
-    return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    return torch.device('cpu')
 
 # Function to get the model and optimizer
-def get_model(device, learning_rate, checkpoint_params, method='basic'):
+def get_model(device, learning_rate, file_path):
     model = UNETWithAttention(1).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
-    model_name = f"{model._get_name()}{checkpoint_params['uid']}"
-    for checkpoint in os.listdir(os.path.join(checkpoint_params['path'], model_name)):
-        if str(checkpoint_params['val']) in checkpoint:
-            checkpoint_params['epoch'] = int(checkpoint.split('_')[-1].split('.')[0])
-            break
-        
-    model, optimizer, metrics = load_checkpoint_from_uid(model, optimizer, checkpoint_params['uid'], checkpoint_params['epoch'], checkpoint_params['val'], checkpoint_params['path'])
+    
+    model, optimizer, metrics = load_checkpoint_from_uid(model, optimizer, file_path=file_path)
     return model, optimizer
 
 # Function to evaluate a certain dataset of images and masks
-def evaluate(dataset_path, checkpoint_params, save_flag=True, method='basic'):
+def evaluate(dataset_path, model_file_path, save_flag=True, method='basic'):
     time_taken = []
     eval_count = 0
     device = get_device()
-    model, optim = get_model(device, 1e-4, checkpoint_params, method)
+    model, optim = get_model(device, learning_rate=1e-4, file_path=model_file_path)
     model.eval()
 
     dataset = IntimaDataset(os.path.join(dataset_path, 'images'))
     print(f"Evaluation dataset {dataset.uid} loaded with {len(dataset)} images")
 
-    loop = tqdm(dataset, desc=f"Evaluating Images", unit='image')
+    #loop = tqdm(dataset, desc=f"Evaluating Images", unit='image')
     with torch.no_grad():
-        for idx, (image, name) in enumerate(loop):
+        for idx, (image, name) in enumerate(dataset):
             image = image.to(device).float().unsqueeze(0)
 
             st = time.time()

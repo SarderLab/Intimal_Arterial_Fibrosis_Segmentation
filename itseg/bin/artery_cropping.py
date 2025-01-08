@@ -7,7 +7,7 @@ from shapely.geometry import Point, Polygon
 def get_annotation_id(gc, item_id, annotation_name):
     annotations = gc.get(f'annotation', parameters={'itemId': item_id.strip()})
     for annotation in annotations:
-        if annotation['annotation']['name'] == annotation_name:
+        if annotation['annotation']['name'].strip().lower() == annotation_name:
             return annotation['_id']
     raise ValueError(f"Annotation with name '{annotation_name}' not found for item ID {item_id}.")
 

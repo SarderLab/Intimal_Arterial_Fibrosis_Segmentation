@@ -6,7 +6,13 @@ checkpoints/
 logs/
 public/
 .venv
-
+*.svs
+*.pth
+*.csv
+*.xlsx
+overlays/
+predictions/
+images/
 __pycache__/
 
 run.txt

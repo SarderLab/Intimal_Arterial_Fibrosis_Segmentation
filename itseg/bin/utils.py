@@ -41,7 +41,8 @@ def save_checkpoint(epoch, model, optim, val=None, metrics = None, dirt='checkpo
 def load_checkpoint(model, optimizer, epoch, val=None, dirt='checkpoints/'):
     file_path = dirt + f"{model._get_name()}{model.uid}/"
     file_path += f"best_model_by_{val}_{epoch}.pth" if val else f"model_at_{epoch}.pth"
-    checkpoint = torch.load(file_path)
+    # checkpoint = torch.load(file_path)
+    checkpoint = torch.load(file_path,map_location=torch.device('cpu'))
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     print(f"Model loaded from {file_path}")
@@ -52,26 +53,23 @@ def load_checkpoint(model, optimizer, epoch, val=None, dirt='checkpoints/'):
     else:
         return model, optimizer
     
-def load_checkpoint_from_uid(model, optimizer, uid, epoch, val=None, dirt='checkpoints/'):
-    file_path = os.path.join(dirt, f"{model._get_name()}{uid}/")
-    file_path += f"best_model_by_{val}_{epoch}.pth" if val else f"model_at_{epoch}.pth"
-    checkpoint = torch.load(file_path)
+def load_checkpoint_from_uid(model, optimizer, file_path):
+    # checkpoint = torch.load(file_path)
+    checkpoint = torch.load(file_path,map_location=torch.device('cpu'))
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     print(f"Model loaded from {file_path}")
-    model.uid = uid
-    epoch = checkpoint['epoch']
     if checkpoint['metrics']:
         metrics = checkpoint['metrics']
         return model, optimizer, metrics
-    else:
-        return model, optimizer, None
+    return model, optimizer, None
 
 # Metrics saving, loading and plotting
 def load_metrics(model, epoch, val=None, dirt='checkpoints/'):
     file_path = dirt + f"{model._get_name()}{model.uid}/"
     file_path += f"model_by_{val}_{epoch}.pth" if val else f"model_at_{epoch}.pth"
-    checkpoint = torch.load(file_path)
+    # checkpoint = torch.load(file_path)
+    checkpoint = torch.load(file_path,map_location=torch.device('cpu'))
     metrics = checkpoint['metrics']
     return metrics
     

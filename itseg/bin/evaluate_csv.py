@@ -14,46 +14,48 @@ def evaluateCSV(csv_path, feature_path, dataset_path):
     idx = 0
     logs = []
     pred_path = os.path.join(dataset_path, 'predictions')
-    with open(csv_path, 'r') as csvfile:
-        reader = csv.reader(csvfile)
-        next(reader)
-        data = list(reader)
-        if os.path.exists(feature_path):
-            for item in os.listdir(feature_path):
-                for row in data:
-                    if item in row[0] and if_prediction_exists(pred_path, item, int(row[1])):
-                        idx += 1
-                        print(f"Processing item {item}...")
-                        pred, cropped_item_name = load_prediction(pred_path, item, int(row[1]))
-                        (x1, y1, x2, y2), compartment_id = get_featurefile_info(row, feature_path)
-                        intimal_area, luminal_area, is_mask_complete = get_intimal_area(pred, row, feature_path, compartment_id, child_radius_threshold = 20, parent_area_threshold = 3000)
-                        mean_thickness = calc_thickness(pred) if intimal_area else 0
-                        row.append(mean_thickness)
-                        luminal_radius = get_luminal_radius(luminal_area)
-                        stenosis_ratio = get_stenosis_area(intimal_area, luminal_area)
-                        row.append(stenosis_ratio)
-                        logs.append([idx, item, cropped_item_name, int(row[1]), x1, y1, x2, y2, compartment_id, luminal_area, luminal_radius, intimal_area if intimal_area else "N/A", mean_thickness, (luminal_radius + mean_thickness), is_mask_complete, stenosis_ratio])
-        else:
-            feature_path = None
-            for row in data:
-                item = str(row[0])
-                if if_prediction_exists(pred_path, item, int(row[1])):
-                    idx += 1
-                    print(f"Processing item {item}...")
-                    pred, cropped_item_name = load_prediction(pred_path, item, int(row[1]))
-                    compartment_id = None
-                    intimal_area, luminal_area, is_mask_complete = get_intimal_area(pred, row, feature_path, compartment_id, child_radius_threshold = 20, parent_area_threshold = 3000)
-                    mean_thickness = calc_thickness(pred) if intimal_area else 0
-                    row.append(mean_thickness)
-                    luminal_radius = get_luminal_radius(luminal_area)
-                    stenosis_ratio = get_stenosis_area(intimal_area, luminal_area)
-                    row.append(stenosis_ratio)
-                    logs.append([idx, item, cropped_item_name, int(row[1]), luminal_area if luminal_area else "N/A", luminal_radius, intimal_area if intimal_area else "N/A", mean_thickness, (luminal_radius + mean_thickness), is_mask_complete, stenosis_ratio])           
+    for item in os.listdir(feature_path):
+        print(item)
+    # with open(csv_path, 'r') as csvfile:
+    #     reader = csv.reader(csvfile)
+    #     next(reader)
+    #     data = list(reader)
+    #     if os.path.exists(feature_path):
+    #         for item in os.listdir(feature_path):
+    #             for row in data:
+    #                 if item in row[0] and if_prediction_exists(pred_path, item, int(row[1])):
+    #                     idx += 1
+    #                     print(f"Processing item {item}...")
+    #                     pred, cropped_item_name = load_prediction(pred_path, item, int(row[1]))
+    #                     (x1, y1, x2, y2), compartment_id = get_featurefile_info(row, feature_path)
+    #                     intimal_area, luminal_area, is_mask_complete = get_intimal_area(pred, row, feature_path, compartment_id, child_radius_threshold = 20, parent_area_threshold = 3000)
+    #                     mean_thickness = calc_thickness(pred) if intimal_area else 0
+    #                     row.append(mean_thickness)
+    #                     luminal_radius = get_luminal_radius(luminal_area)
+    #                     stenosis_ratio = get_stenosis_area(intimal_area, luminal_area)
+    #                     row.append(stenosis_ratio)
+    #                     logs.append([idx, item, cropped_item_name, int(row[1]), x1, y1, x2, y2, compartment_id, luminal_area, luminal_radius, intimal_area if intimal_area else "N/A", mean_thickness, (luminal_radius + mean_thickness), is_mask_complete, stenosis_ratio])
+    #     else:
+    #         feature_path = None
+    #         for row in data:
+    #             item = str(row[0])
+    #             if if_prediction_exists(pred_path, item, int(row[1])):
+    #                 idx += 1
+    #                 print(f"Processing item {item}...")
+    #                 pred, cropped_item_name = load_prediction(pred_path, item, int(row[1]))
+    #                 compartment_id = None
+    #                 intimal_area, luminal_area, is_mask_complete = get_intimal_area(pred, row, feature_path, compartment_id, child_radius_threshold = 20, parent_area_threshold = 3000)
+    #                 mean_thickness = calc_thickness(pred) if intimal_area else 0
+    #                 row.append(mean_thickness)
+    #                 luminal_radius = get_luminal_radius(luminal_area)
+    #                 stenosis_ratio = get_stenosis_area(intimal_area, luminal_area)
+    #                 row.append(stenosis_ratio)
+    #                 logs.append([idx, item, cropped_item_name, int(row[1]), luminal_area if luminal_area else "N/A", luminal_radius, intimal_area if intimal_area else "N/A", mean_thickness, (luminal_radius + mean_thickness), is_mask_complete, stenosis_ratio])           
                
-    print(f"Total items found: {idx}")
-    log_df = pd.DataFrame(logs, columns=['Sr No', 'Slide Name', 'Cropped Artery Name', 'Cropped Artery Index', 'Luminal Area(pix2)', 'Luminal Radius(pix)', 'Intimal Area(pix2)', 'Average Intimal Thickness(pix)', 'Outer Boundary Intimal Thickness(pix)', 'isMaskComplete', 'Stenosis Ratio(%)'])
-    save_path = os.path.join(dataset_path, 'intimal_pipeline_results.csv')
-    log_df.to_csv(save_path, index=False)
+    # print(f"Total items found: {idx}")
+    # log_df = pd.DataFrame(logs, columns=['Sr No', 'Slide Name', 'Cropped Artery Name', 'Cropped Artery Index', 'Luminal Area(pix2)', 'Luminal Radius(pix)', 'Intimal Area(pix2)', 'Average Intimal Thickness(pix)', 'Outer Boundary Intimal Thickness(pix)', 'isMaskComplete', 'Stenosis Ratio(%)'])
+    # save_path = os.path.join(dataset_path, 'intimal_pipeline_results.csv')
+    # log_df.to_csv(save_path, index=False)
         
 # Function to get the stenosis area
 def get_stenosis_area(intimal_area, luminal_area):
