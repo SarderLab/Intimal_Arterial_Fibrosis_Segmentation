@@ -4,58 +4,55 @@ import pandas as pd
 import numpy as np
 import cv2
 import skimage.morphology as skm
-
+from itseg.config import ARTERIES_FEATURE_FILE, PREDICTIONS_FOLDER_NAME, RESULT_XLSX_FILENAME, INTIMA_XLSX_COLNAMES
 from sklearn.metrics import DistanceMetric
 from resources.Dataset import IntimaDataset
+from girder_client import GirderClient
 
 
 # Function to evaluate the predictions and generate the results csv
-def evaluateCSV(csv_path, feature_path, dataset_path):
+def evaluateCSV(gc: GirderClient, item_id: str,csv_path: str, svs_file_path:str , dataset_path: str) -> None:
+    """This function is used to generate the results of the Intimal Segmentation with the calculated results based on arteries_Features.xlsx
+
+    Args:
+        gc (GirderClient): A girder client object to interact with the Girder API
+        item_id (str): The itemId of the svs image we are working with
+        csv_path (str): The csv file which contains details about the Original Image Dimensions(BBox values)
+        svs_file_path (str): The local path to a copy of the svs image 
+        dataset_path (str): The primary local filepath from where we can access several related files required for the computations
+
+    Raises:
+        e: Propogate the exception
+    """
     idx = 0
     logs = []
-    pred_path = os.path.join(dataset_path, 'predictions')
-    for item in os.listdir(feature_path):
-        print(item)
-    # with open(csv_path, 'r') as csvfile:
-    #     reader = csv.reader(csvfile)
-    #     next(reader)
-    #     data = list(reader)
-    #     if os.path.exists(feature_path):
-    #         for item in os.listdir(feature_path):
-    #             for row in data:
-    #                 if item in row[0] and if_prediction_exists(pred_path, item, int(row[1])):
-    #                     idx += 1
-    #                     print(f"Processing item {item}...")
-    #                     pred, cropped_item_name = load_prediction(pred_path, item, int(row[1]))
-    #                     (x1, y1, x2, y2), compartment_id = get_featurefile_info(row, feature_path)
-    #                     intimal_area, luminal_area, is_mask_complete = get_intimal_area(pred, row, feature_path, compartment_id, child_radius_threshold = 20, parent_area_threshold = 3000)
-    #                     mean_thickness = calc_thickness(pred) if intimal_area else 0
-    #                     row.append(mean_thickness)
-    #                     luminal_radius = get_luminal_radius(luminal_area)
-    #                     stenosis_ratio = get_stenosis_area(intimal_area, luminal_area)
-    #                     row.append(stenosis_ratio)
-    #                     logs.append([idx, item, cropped_item_name, int(row[1]), x1, y1, x2, y2, compartment_id, luminal_area, luminal_radius, intimal_area if intimal_area else "N/A", mean_thickness, (luminal_radius + mean_thickness), is_mask_complete, stenosis_ratio])
-    #     else:
-    #         feature_path = None
-    #         for row in data:
-    #             item = str(row[0])
-    #             if if_prediction_exists(pred_path, item, int(row[1])):
-    #                 idx += 1
-    #                 print(f"Processing item {item}...")
-    #                 pred, cropped_item_name = load_prediction(pred_path, item, int(row[1]))
-    #                 compartment_id = None
-    #                 intimal_area, luminal_area, is_mask_complete = get_intimal_area(pred, row, feature_path, compartment_id, child_radius_threshold = 20, parent_area_threshold = 3000)
-    #                 mean_thickness = calc_thickness(pred) if intimal_area else 0
-    #                 row.append(mean_thickness)
-    #                 luminal_radius = get_luminal_radius(luminal_area)
-    #                 stenosis_ratio = get_stenosis_area(intimal_area, luminal_area)
-    #                 row.append(stenosis_ratio)
-    #                 logs.append([idx, item, cropped_item_name, int(row[1]), luminal_area if luminal_area else "N/A", luminal_radius, intimal_area if intimal_area else "N/A", mean_thickness, (luminal_radius + mean_thickness), is_mask_complete, stenosis_ratio])           
-               
-    # print(f"Total items found: {idx}")
-    # log_df = pd.DataFrame(logs, columns=['Sr No', 'Slide Name', 'Cropped Artery Name', 'Cropped Artery Index', 'Luminal Area(pix2)', 'Luminal Radius(pix)', 'Intimal Area(pix2)', 'Average Intimal Thickness(pix)', 'Outer Boundary Intimal Thickness(pix)', 'isMaskComplete', 'Stenosis Ratio(%)'])
-    # save_path = os.path.join(dataset_path, 'intimal_pipeline_results.csv')
-    # log_df.to_csv(save_path, index=False)
+    pred_path = os.path.join(dataset_path, PREDICTIONS_FOLDER_NAME)
+    item_name = os.path.basename(svs_file_path)
+    base_name = os.path.splitext(item_name)[0]
+    arteries_feature_file_path = os.path.join(dataset_path, ARTERIES_FEATURE_FILE)
+    try:
+        with open(csv_path, 'r') as csvfile:
+            reader = csv.reader(csvfile)
+            next(reader)
+            data = list(reader)
+            for row in data:
+                if if_prediction_exists(pred_path, base_name, int(row[1])):
+                    pred, cropped_item_name = load_prediction(pred_path, base_name, int(row[1]))
+                    (x1, y1, x2, y2), compartment_id = get_featurefile_info(row, arteries_feature_file_path)
+                    intimal_area, luminal_area, is_mask_complete = get_intimal_area(pred, row, arteries_feature_file_path, compartment_id, child_radius_threshold = 20, parent_area_threshold = 3000)
+                    mean_thickness = calc_thickness(pred) if intimal_area else 0
+                    row.append(mean_thickness)
+                    luminal_radius = get_luminal_radius(luminal_area)
+                    stenosis_ratio = get_stenosis_area(intimal_area, luminal_area)
+                    row.append(stenosis_ratio)
+                    logs.append([idx, item_name, cropped_item_name, int(row[1]), x1, y1, x2, y2, compartment_id, luminal_area, luminal_radius, intimal_area if intimal_area else "N/A", mean_thickness, (luminal_radius + mean_thickness), is_mask_complete, stenosis_ratio])
+                
+        log_df = pd.DataFrame(logs, columns=INTIMA_XLSX_COLNAMES)
+        save_path = os.path.join(dataset_path, RESULT_XLSX_FILENAME)
+        log_df.to_excel(save_path, index=False)
+        gc.uploadFileToItem(itemId= item_id, filepath=save_path)
+    except Exception as e:
+        raise e
         
 # Function to get the stenosis area
 def get_stenosis_area(intimal_area, luminal_area):
@@ -69,11 +66,11 @@ def get_luminal_radius(area):
     return round(np.sqrt(area / np.pi), 4) if area is not None else 0
 
 # Function to get the luminal area from the feature file
-def get_luminal_area_from_feature_file(row, feature_path, compartment_id):
-    if compartment_id is not None and feature_path is not None:
+def get_luminal_area_from_feature_file(row, feature_file_path, compartment_id):
+    if compartment_id is not None and feature_file_path is not None:
         item = row[0]
-        if os.path.exists(f"{feature_path}/{item}/arteriesarterioles_Features.xlsx"):
-            df_mf = pd.read_excel(f"{feature_path}/{item}/arteriesarterioles_Features.xlsx", sheet_name="Morphological Features")
+        if os.path.exists(feature_file_path):
+            df_mf = pd.read_excel(feature_file_path, sheet_name="Morphological Features")
             luminal_area = df_mf[df_mf['compartment_ids'] == compartment_id]['Luminal Space Area'].values[0]       
             return luminal_area
         else:
@@ -83,10 +80,10 @@ def get_luminal_area_from_feature_file(row, feature_path, compartment_id):
         return 0
     
 # Function to get the feature file info
-def get_featurefile_info(row, feature_path, distance_type='euclidean'):
+def get_featurefile_info(row, feature_filepath, distance_type='euclidean'):
     item, xmin, ymin, xmax, ymax = str(row[0]), int(row[2]), int(row[3]), int(row[4]), int(row[5])
-    if os.path.exists(f"{feature_path}/{item}/arteriesarterioles_Features.xlsx"):
-        df_bb = pd.read_excel(f"{feature_path}/{item}/arteriesarterioles_Features.xlsx", sheet_name="Bounding Boxes")
+    if os.path.exists(feature_filepath):
+        df_bb = pd.read_excel(feature_filepath, sheet_name="Bounding Boxes")
         distance_fn = DistanceMetric.get_metric(distance_type)
         (x1, y1, x2, y2), compartment_id = get_closest_compartment_id(distance_fn, df_bb, xmin, ymin, xmax, ymax)
         return (x1, y1, x2, y2), compartment_id
@@ -111,14 +108,14 @@ def get_closest_compartment_id(distance_fn, df, xmin, ymin, xmax, ymax):
         print(f"Error: {e}")
 
 # Function to check if the prediction exists
-def if_prediction_exists(pred_path, item_name, point_index):
-    if os.path.exists(os.path.join(pred_path, item_name.split('.')[0] + f"_point{point_index}_cropped.png")) or any([item_name.split('.')[0] in item for item in os.listdir(pred_path)]):
+def if_prediction_exists(pred_path, basename, point_index):
+    if os.path.exists(os.path.join(pred_path, basename + f"_point{point_index}_cropped.png")) or any([basename in item for item in os.listdir(pred_path)]):
         return True
     return False        
 
 # Function to load the prediction
-def load_prediction(pred_path, item_name, point_index):
-    item_png_name = item_name.split('.')[0] + f"_point{point_index}_cropped.png"
+def load_prediction(pred_path, basename, point_index):
+    item_png_name = basename + f"_point{point_index}_cropped.png"
     pred_path = os.path.join(pred_path, item_png_name)
     pred = cv2.imread(pred_path, cv2.IMREAD_GRAYSCALE)
     pred = cv2.resize(pred, (IntimaDataset.WIDTH, IntimaDataset.HEIGHT), interpolation = cv2.INTER_AREA)
