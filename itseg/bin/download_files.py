@@ -1,7 +1,7 @@
 from girder_client import GirderClient
 from typing import List
-from itseg.config import DEFAULT_ANNOTATIONS_REQ
-from itseg.utils import get_local_file_path, get_file_name
+from itseg.config import DEFAULT_ANNOTATIONS_REQ,ARTERIES_FEATURE_FILE
+from itseg.utils import get_local_file_path, get_file_name,getFiles
 
 
 
@@ -30,7 +30,7 @@ def check_annotations(annotation_list:List[str], gc: GirderClient, item_id:str) 
 
 #Check whether both the annotation files are present
  # Download svs file. 
-def check_and_download_file(item_id:str, file_id:str,  gc: GirderClient, annotation_list=None) -> str:
+def check_and_download_files(item_id:str, file_id:str,  gc: GirderClient, annotation_list=None) -> str:
     if not annotation_list:
         annotation_list = DEFAULT_ANNOTATIONS_REQ
     
@@ -41,5 +41,36 @@ def check_and_download_file(item_id:str, file_id:str,  gc: GirderClient, annotat
     file_name = get_file_name(gc, fileid=file_id)
     full_file_path = f"{local_path}/{file_name}"
     gc.downloadFile(fileId=file_id, path=full_file_path)
+    download_feature_files(gc,itemId=item_id, feature_fnames=[ARTERIES_FEATURE_FILE])
     return full_file_path
+
+
+def download_feature_files(gc:GirderClient, itemId: str, feature_fids: List=None, feature_fnames: List = None):
+    if not feature_fids and not feature_fnames:
+        return
     
+    if not feature_fids:
+        feature_fids = []
+    
+    if not feature_fnames:
+        feature_fnames = []
+    
+    files = getFiles(itemId=itemId, gc=gc)
+    local_path = get_local_file_path()
+    
+    def check_if_exists(filename:str) -> bool:
+        for file in files:
+            if file['name'].strip() == filename:
+                return file['_id']
+        return None
+    
+    for feature_file_name in feature_fnames:
+        fid = check_if_exists(feature_file_name)
+        if fid:
+            feature_fids.append(fid)
+
+    for id in feature_fids:
+        path = f"{local_path}/{get_file_name(gc, id)}"
+        gc.downloadFile(id, path=path)
+
+        
