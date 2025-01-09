@@ -35,13 +35,6 @@
       <longflag>artery_cropping_margin</longflag>
       <default>30</default>
     </integer>
-    <!-- <boolean>
-      <name>use_original</name>
-      <label>Original Data</label>
-      <description>Use the original dataset for clutering instead of Prinicpal Components. </description>
-      <longflag>use_original</longflag>
-      <default>False</default>
-    </boolean> -->
   </parameters>
   <parameters advanced="true">
     <label>API config</label>
