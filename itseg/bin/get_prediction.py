@@ -46,7 +46,7 @@ def evaluate(gc,item_id, dataset_path, model_file_path, box_coords_dict, save_fl
             time_taken.append(time.time() - st)
             pred = get_pred(logit, method)
             if save_flag:
-                save_path = save_prediction(pred, name, os.path.join(dataset_path, 'predictions'))
+                save_path = save_prediction(pred, name, os.path.join(dataset_path, 'predictions'), box_coords_dict)
                 eval_count += 1
     
     print(f"Time taken to evaluate {eval_count} images: {np.mean(time_taken):0.4f} seconds")
@@ -86,12 +86,15 @@ def create_overlay(image, mask, alpha=0.5):
     return overlay
 
 # Function to save the prediction as image
-def save_prediction(logit, name, save_path):
+def save_prediction(logit, name, save_path,box_coords_dict:dict):
     logit = logit.cpu().detach().numpy()
     logit = logit * 255
     logit = logit.astype(np.uint8)
     logit = logit.reshape(logit.shape[2], logit.shape[3])
-    resized_logit = cv2.resize(logit, (1547,1126), interpolation=cv2.INTER_NEAREST)
+    bbox = box_coords_dict[name]
+    original_width = bbox["xmax"] - bbox["xmin"]
+    original_height = bbox["ymax"] - bbox["ymin"]
+    resized_logit = cv2.resize(logit, (original_width,original_height), interpolation=cv2.INTER_NEAREST)
     create_dir(save_path)
     try:
         cv2.imwrite(os.path.join(save_path, name), resized_logit)

@@ -45,7 +45,9 @@ def process_csv_and_generate_crops(gc: girder_client.GirderClient, svs_file_path
                 box_coords.append([item_name, point_index, xmin, ymin, xmax, ymax])
                 box_coords_dict[f"{base_filename}_cropped.png"] = {
                     "xmin": xmin,
-                    "ymin": ymin
+                    "ymin": ymin,
+                    "xmax":xmax,
+                    "ymax":ymax
                 }
             else:
                 print(f"No artery found close to the point at index {point_index} for item {item_name}.")
