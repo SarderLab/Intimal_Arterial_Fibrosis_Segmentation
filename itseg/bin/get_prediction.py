@@ -23,7 +23,11 @@ def get_model(device, learning_rate, file_path):
     model = UNETWithAttention(1).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     
-    model, optimizer, metrics = load_checkpoint_from_uid(model, optimizer, file_path=file_path)
+    if torch.cuda.is_available():
+        model, optimizer, metrics = load_checkpoint_from_uid(model, optimizer, checkpoint_params['uid'], checkpoint_params['epoch'], checkpoint_params['val'], checkpoint_params['path'])
+    else:
+        model, optimizer, metrics = load_checkpoint_from_uid(model, optimizer, checkpoint_params['uid'], checkpoint_params['epoch'], checkpoint_params['val'], checkpoint_params['path'], map_location=torch.device('cpu'))
+
     return model, optimizer
 
 # Function to evaluate a certain dataset of images and masks
