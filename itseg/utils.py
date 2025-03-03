@@ -1,7 +1,7 @@
 import os
 import copy
 import json
-from .config import DEFAULT_DOCKER_TMP_PATH, TMPDIR_ENV_NAME, COLLECTION_NAME,OP_FOLDER_NAME,JSON_ANNOTATION_TEMPLATE, PREDICTIONS_FOLDER_NAME
+from .config import DEFAULT_DOCKER_TMP_PATH, TMPDIR_ENV_NAME, COLLECTION_NAME,OP_FOLDER_NAME,JSON_ANNOTATION_TEMPLATE, PREDICTIONS_FOLDER_NAME, IMAGES_FOLDER_NAME
 from girder_client import GirderClient
 
 def get_local_file_path():
@@ -169,13 +169,22 @@ def uploadIntemaAnnotations(gc:GirderClient,item_id:str,dataset_path:str,box_coo
     
     pred_path = os.path.join(dataset_path,PREDICTIONS_FOLDER_NAME)
     images = [item for item in os.listdir(pred_path) if item.endswith('.png')]
+    
+    cropped_img_path = os.path.join(dataset_path, IMAGES_FOLDER_NAME)
+    cropped_images = [item for item in os.listdir(cropped_img_path) if item.endswith('.png')]
+    
     girder_items = []
 
+    for idx, image in enumerate(cropped_images):
+        image_path = f"{cropped_img_path}/{image}"
+        uploadImages(gc,item_id,file_path=image_path,filename=f"original_crop_{idx}")
+    
     for image in images:
         image_path = f"{pred_path}/{image}"
         folderId = get_folderId(gc=gc)
         #Upload a copy of these to the files section for other dependent plugins. 
-        gc.uploadFileToItem(itemId=item_id, filepath=image_path)
+        # gc.uploadFileToItem(itemId=item_id, filepath=image_path)
+        uploadImages(gc,item_id,file_path=image_path)
 
         #Upload another copy for generating annotation
         try:
@@ -189,4 +198,14 @@ def uploadIntemaAnnotations(gc:GirderClient,item_id:str,dataset_path:str,box_coo
     
     json_data = generateAnnotationJSON(girder_items,box_coords_dict)
     gc.post(path='annotation',parameters={"itemId":item_id}, data=json.dumps(json_data))
+
+
+def uploadImages(gc: GirderClient, item_id:str, file_path:str,filename=None) -> None:
+    try:
+        if not gc or not item_id or not file_path:
+            raise Exception(f"Please pass the parameters for file upload - (gc, item_id, file_path)")
+        gc.uploadFileToItem(itemId=item_id, filepath=file_path, filename=filename)
+    except Exception as e:
+        raise e
+    
     
