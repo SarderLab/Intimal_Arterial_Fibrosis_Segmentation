@@ -24,9 +24,9 @@ def get_model(device, learning_rate, file_path):
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     
     if torch.cuda.is_available():
-        model, optimizer, metrics = load_checkpoint_from_uid(model, optimizer, checkpoint_params['uid'], checkpoint_params['epoch'], checkpoint_params['val'], checkpoint_params['path'])
+        model, optimizer, metrics = load_checkpoint_from_uid(model, optimizer, file_path=file_path)
     else:
-        model, optimizer, metrics = load_checkpoint_from_uid(model, optimizer, checkpoint_params['uid'], checkpoint_params['epoch'], checkpoint_params['val'], checkpoint_params['path'], map_location=torch.device('cpu'))
+        model, optimizer, metrics = load_checkpoint_from_uid(model, optimizer, file_path=file_path, map_location=torch.device('cpu'))
 
     return model, optimizer
 
