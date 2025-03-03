@@ -52,8 +52,8 @@ def load_checkpoint(model, optimizer, epoch, val=None, dirt='checkpoints/'):
     else:
         return model, optimizer
     
-def load_checkpoint_from_uid(model, optimizer, file_path):
-    checkpoint = torch.load(file_path)
+def load_checkpoint_from_uid(model, optimizer, file_path, map_location = None):
+    checkpoint = torch.load(file_path,map_location=map_location)
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     print(f"Model loaded from {file_path}")
